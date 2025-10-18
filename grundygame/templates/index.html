@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grundy's Game | AI Challenge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <h1>Grundy's Game</h1>
+            <p>Can you outsmart the Minimax AI?</p>
+        </header>
+
+        <main id="game-area">
+            <!-- Game Setup Screen -->
+            <div id="game-setup">
+                <div class="input-group">
+                    <input type="number" id="initial-number" placeholder="Enter a starting number (e.g., 25)">
+                    <button id="start-game-btn">Begin Challenge</button>
+                </div>
+            </div>
+
+            <!-- Main Game Board -->
+            <div id="game-board-container" class="hidden">
+                <div id="turn-indicator">
+                    <span id="turn-text">Your Turn</span>
+                </div>
+                <div id="game-board">
+                    <!-- Heaps will be dynamically inserted here -->
+                </div>
+                <div id="player-controls">
+                    <p>Split the selected heap into two unequal parts:</p>
+                    <div class="input-group">
+                        <input type="number" id="split-part1" placeholder="Part 1">
+                        <input type="number" id="split-part2" placeholder="Part 2">
+                        <button id="make-move-btn">Confirm Split</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="game-footer">
+            <div id="game-message"></div>
+            <button id="restart-game-btn" class="hidden">Play Again</button>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
