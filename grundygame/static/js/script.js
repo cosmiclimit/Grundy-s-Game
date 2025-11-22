@@ -14,6 +14,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const turnIndicator = document.getElementById('turn-indicator');
     const turnText = document.getElementById('turn-text');
 
+    // --- NEW: Modal Elements ---
+    const gameOverModal = document.getElementById('game-over-modal');
+    const winnerTitle = document.getElementById('winner-title');
+    const winnerMessage = document.getElementById('winner-message');
+    const modalRestartBtn = document.getElementById('modal-restart-btn');
+
     let heaps = [];
     let selectedHeap = null;
     let isAnimating = false;
@@ -22,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     startGameBtn.addEventListener('click', startGame);
     restartGameBtn.addEventListener('click', () => location.reload());
     makeMoveBtn.addEventListener('click', makePlayerMove);
+    modalRestartBtn.addEventListener('click', () => location.reload()); // Reloads page on "Play Again"
 
     // --- Game Logic Functions ---
     function startGame() {
@@ -39,11 +46,22 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(response => response.json())
         .then(data => {
             heaps = data.heaps;
-            updateGameBoard();
+            updateGameBoard(); // Render the board immediately
+            
             gameSetupDiv.classList.add('hidden');
             gameBoardContainer.classList.remove('hidden');
             restartGameBtn.classList.remove('hidden');
-            updateTurnIndicator(true);
+
+            // --- NEW: Check Coin Toss Result ---
+            if (data.ai_started) {
+                // AI won the toss and already moved.
+                displayMessage("Coin Toss: AI won and moved first!", 'lose');
+                updateTurnIndicator(true); // It is now Human's turn
+            } else {
+                // Human won the toss.
+                displayMessage("Coin Toss: You won! You start.", 'win');
+                updateTurnIndicator(true);
+            }
         });
     }
 
@@ -58,39 +76,37 @@ document.addEventListener('DOMContentLoaded', () => {
         const part2 = parseInt(splitPart2Input.value);
 
         if (isNaN(part1) || isNaN(part2) || part1 <= 0 || part2 <= 0) {
-            displayMessage("Please enter valid positive numbers for the split.", 'error');
+            displayMessage("Please enter valid positive numbers.", 'error');
             return;
         }
         if (part1 === part2) {
-            displayMessage("The two parts must be of unequal size.", 'error');
+            displayMessage("Parts must be unequal.", 'error');
             return;
         }
         if (part1 + part2 !== selectedHeap.value) {
-            displayMessage(`The split must sum to the selected heap (${selectedHeap.value}).`, 'error');
+            displayMessage(`Must sum to ${selectedHeap.value}.`, 'error');
             return;
         }
 
-        // --- Player Move Animation Logic ---
+        // Animation & Logic
         isAnimating = true;
         playerControlsDiv.classList.add('hidden');
         
         const selectedIndex = parseInt(selectedHeap.element.dataset.index);
         const heapToSplit = selectedHeap.element;
 
-        // Animate the player's split
         heapToSplit.classList.remove('selected');
         heapToSplit.classList.add('splitting-out');
 
         heapToSplit.addEventListener('animationend', () => {
-            // Update the underlying data array *after* the animation is done
+            // Update local state
             let heapsAfterHumanMove = heaps.slice();
             heapsAfterHumanMove.splice(selectedIndex, 1, part1, part2);
-            heaps = heapsAfterHumanMove; // Update global state
+            heaps = heapsAfterHumanMove;
             
-            // Redraw the board to reflect the player's move cleanly
-            updateGameBoard();
+            updateGameBoard(); // Redraw board
 
-            // NOW, ask the AI for its move
+            // Send move to AI
             updateTurnIndicator(false);
             fetch('/move', {
                 method: 'POST',
@@ -99,47 +115,59 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .then(response => response.json())
             .then(data => {
-                animateAIMove(data);
+                handleGameResponse(data);
             });
         }, { once: true });
     }
 
-    function animateAIMove(data) {
+    function handleGameResponse(data) {
+        // 1. Did Human Win?
         if (data.winner === 'human') {
             heaps = data.heaps;
             updateGameBoard();
-            displayMessage("Congratulations! You made the final move. You Win!", 'win');
-            endGame();
+            showGameOver('human'); // Show Popup
             isAnimating = false;
             return;
         }
 
+        // 2. Animate AI Move
         const { source_heap_index } = data.ai_move;
         const currentHeapsOnBoard = Array.from(gameBoardDiv.children);
         const heapToSplit = currentHeapsOnBoard[source_heap_index];
 
-        setTimeout(() => {
-            if (heapToSplit) heapToSplit.classList.add('ai-selected');
-        }, 500);
-
-        setTimeout(() => {
-            if (heapToSplit) heapToSplit.classList.add('splitting-out');
-        }, 1500);
+        setTimeout(() => { if (heapToSplit) heapToSplit.classList.add('ai-selected'); }, 500);
+        setTimeout(() => { if (heapToSplit) heapToSplit.classList.add('splitting-out'); }, 1500);
 
         setTimeout(() => {
             isAnimating = false;
             heaps = data.heaps;
             updateGameBoard();
 
+            // 3. Did AI Win?
             if (data.winner === 'ai') {
-                // Use the new, more descriptive losing message
-                displayMessage("No more moves are possible for you. The AI wins!", 'lose');
-                endGame();
+                showGameOver('ai'); // Show Popup
             } else {
                 updateTurnIndicator(true);
                 playerControlsDiv.classList.remove('hidden');
             }
         }, 2200);
+    }
+
+    // --- NEW: Helper to Show the Pop-up ---
+    function showGameOver(winner) {
+        gameOverModal.classList.remove('hidden');
+        if (winner === 'human') {
+            winnerTitle.textContent = "You Won!";
+            winnerMessage.textContent = "Your superior intellect has defeated the machine.";
+            winnerTitle.style.color = "#2ecc71"; // Green
+        } else {
+            winnerTitle.textContent = "Game Over";
+            winnerMessage.textContent = "The AI has trapped you. No moves left.";
+            winnerTitle.style.color = "#e74c3c"; // Red
+        }
+        // Hide game controls so they can't click anything
+        playerControlsDiv.classList.add('hidden');
+        turnIndicator.classList.add('hidden');
     }
 
     // --- UI Update Functions ---
@@ -155,6 +183,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 heapElement.addEventListener('click', () => selectHeap(heapElement, heapValue));
             } else {
                 heapElement.style.cursor = 'not-allowed';
+                // Visual cue for "dead" heaps
+                if (heapValue <= 2) heapElement.style.opacity = "0.6";
             }
             gameBoardDiv.appendChild(heapElement);
         });
@@ -187,18 +217,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function updateTurnIndicator(isPlayerTurn) {
         if (isPlayerTurn) {
-            turnText.textContent = "Your Turn: Select a heap and enter a split";
-            turnIndicator.style.backgroundColor = 'var(--success-color)';
-            displayMessage("");
+            turnText.textContent = "Your Turn";
+            turnIndicator.style.backgroundColor = '#2ecc71'; // Green
+            turnIndicator.style.color = '#fff';
         } else {
             turnText.textContent = "AI is Thinking...";
-            turnIndicator.style.backgroundColor = 'var(--message-ai-turn)';
+            turnIndicator.style.backgroundColor = '#e74c3c'; // Red
+            turnIndicator.style.color = '#fff';
         }
-    }
-
-    function endGame() {
-        playerControlsDiv.classList.add('hidden');
-        turnIndicator.classList.add('hidden');
-        isAnimating = true;
     }
 });
