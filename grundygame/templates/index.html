@@ -12,13 +12,110 @@
 <body>
     <div class="game-container">
         <header class="game-header">
-            <h1>Grundy's Game</h1>
-            <p>Can you outsmart the Minimax AI?</p>
+            <div class="header-content">
+                <div class="header-text">
+                    <h1>Grundy's Game</h1>
+                    <p>Can you outsmart the Minimax AI?</p>
+                </div>
+                <button class="music-toggle-btn" id="music-toggle-btn" title="Toggle Background Music">
+                    <span class="music-icon">🔊</span>
+                </button>
+            </div>
         </header>
 
         <main id="game-area">
             <!-- Game Setup Screen -->
             <div id="game-setup">
+                <!-- Animated Rules Section -->
+                <div class="rules-container">
+                    <div class="rules-header">
+                        <h2>How to Play</h2>
+                        <button class="rules-toggle collapsed" id="rules-toggle">
+                            <span class="toggle-icon">▼</span>
+                        </button>
+                    </div>
+                    <div class="rules-content collapsed" id="rules-content">
+                        <div class="rules-animation">
+                            <div class="animation-step">
+                                <div class="step-content">
+                                    <p class="step-title">Start with a number</p>
+                                    <div class="animated-heap start-heap">
+                                        <span class="heap-value">25</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="animation-step">
+                                <div class="step-content">
+                                    <p class="step-title">Split into two unequal parts</p>
+                                    <div class="split-animation">
+                                        <div class="animated-heap splitting-heap">
+                                            <span class="heap-value">25</span>
+                                        </div>
+                                        <div class="split-arrow">↓</div>
+                                        <div class="split-result">
+                                            <div class="animated-heap result-heap">
+                                                <span class="heap-value">10</span>
+                                            </div>
+                                            <div class="animated-heap result-heap">
+                                                <span class="heap-value">15</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="animation-step">
+                                <div class="step-content">
+                                    <p class="step-title">AI responds with its move</p>
+                                    <div class="ai-move-indicator">
+                                        <div class="animated-heap ai-heap">
+                                            <span class="heap-value">15</span>
+                                        </div>
+                                        <div class="ai-icon">🤖</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="animation-step">
+                                <div class="step-content">
+                                    <p class="step-title">Last player who can't move loses</p>
+                                    <div class="final-state">
+                                        <div class="animated-heap final-heap disabled">
+                                            <span class="heap-value">2</span>
+                                        </div>
+                                        <div class="animated-heap final-heap disabled">
+                                            <span class="heap-value">1</span>
+                                        </div>
+                                        <div class="animated-heap final-heap disabled">
+                                            <span class="heap-value">1</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="rules-text">
+                            <div class="rule-item">
+                                <span class="rule-icon">📌</span>
+                                <p>You and the AI take turns splitting numbers</p>
+                            </div>
+                            <div class="rule-item">
+                                <span class="rule-icon">📌</span>
+                                <p>Each split must create two <strong>unequal</strong> parts</p>
+                            </div>
+                            <div class="rule-item">
+                                <span class="rule-icon">📌</span>
+                                <p>Numbers ≤ 2 cannot be split</p>
+                            </div>
+                            <div class="rule-item">
+                                <span class="rule-icon">📌</span>
+                                <p>The player who cannot make a move <strong>loses</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="input-group">
                     <input type="number" id="initial-number" placeholder="Enter a starting number (e.g., 25)">
                     <button id="start-game-btn">Begin Challenge</button>
@@ -50,6 +147,7 @@
         </footer>
     </div>
 
+    <script src="{{ url_for('static', filename='js/soundManager.js') }}"></script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>
