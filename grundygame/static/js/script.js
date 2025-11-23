@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const splitPart2Input = document.getElementById('split-part2');
     const turnIndicator = document.getElementById('turn-indicator');
     const turnText = document.getElementById('turn-text');
+    const rulesToggle = document.getElementById('rules-toggle');
+    const rulesContent = document.getElementById('rules-content');
+    const musicToggleBtn = document.getElementById('music-toggle-btn');
 
     // --- NEW: Modal Elements ---
     const gameOverModal = document.getElementById('game-over-modal');
@@ -24,11 +27,70 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedHeap = null;
     let isAnimating = false;
 
+    // --- Sound Manager Integration ---
+    // Initialize background music when page loads
+    // Note: Modern browsers may require user interaction before playing audio
+    // The sound manager will handle this gracefully
+    if (typeof soundManager !== 'undefined') {
+        // Try to start background music
+        soundManager.playBackgroundMusic();
+        
+        // Update music toggle button icon based on initial state
+        updateMusicToggleIcon();
+        
+        // If autoplay is blocked, start music on first user interaction
+        const startMusicOnInteraction = () => {
+            soundManager.playBackgroundMusic();
+            updateMusicToggleIcon();
+            // Remove listeners after first interaction
+            document.removeEventListener('click', startMusicOnInteraction);
+            document.removeEventListener('keydown', startMusicOnInteraction);
+        };
+        
+        // Add listeners for user interaction (fallback for autoplay restrictions)
+        document.addEventListener('click', startMusicOnInteraction, { once: true });
+        document.addEventListener('keydown', startMusicOnInteraction, { once: true });
+    }
+
+    // --- Music Toggle Functionality ---
+    function updateMusicToggleIcon() {
+        if (musicToggleBtn && typeof soundManager !== 'undefined') {
+            const isMuted = soundManager.isMuted();
+            const musicIcon = musicToggleBtn.querySelector('.music-icon');
+            
+            if (musicIcon) {
+                musicIcon.textContent = isMuted ? '🔇' : '🔊';
+            }
+            
+            if (isMuted) {
+                musicToggleBtn.classList.add('muted');
+            } else {
+                musicToggleBtn.classList.remove('muted');
+            }
+        }
+    }
+
+    // Add event listener for music toggle button
+    if (musicToggleBtn && typeof soundManager !== 'undefined') {
+        musicToggleBtn.addEventListener('click', () => {
+            soundManager.toggleMute();
+            updateMusicToggleIcon();
+        });
+    }
+
     // --- Event Listeners ---
     startGameBtn.addEventListener('click', startGame);
     restartGameBtn.addEventListener('click', () => location.reload());
     makeMoveBtn.addEventListener('click', makePlayerMove);
     modalRestartBtn.addEventListener('click', () => location.reload()); // Reloads page on "Play Again"
+    
+    // Rules toggle functionality
+    if (rulesToggle && rulesContent) {
+        rulesToggle.addEventListener('click', () => {
+            rulesContent.classList.toggle('collapsed');
+            rulesToggle.classList.toggle('collapsed');
+        });
+    }
 
     // --- Game Logic Functions ---
     function startGame() {
@@ -52,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
             gameBoardContainer.classList.remove('hidden');
             restartGameBtn.classList.remove('hidden');
 
-            // --- NEW: Check Coin Toss Result ---
+            // --- Check Coin Toss Result ---
             if (data.ai_started) {
                 // AI won the toss and already moved.
                 displayMessage("Coin Toss: AI won and moved first!", 'lose');
@@ -76,15 +138,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const part2 = parseInt(splitPart2Input.value);
 
         if (isNaN(part1) || isNaN(part2) || part1 <= 0 || part2 <= 0) {
-            displayMessage("Please enter valid positive numbers.", 'error');
+            displayMessage("Please enter valid positive numbers for the split.", 'error');
             return;
         }
         if (part1 === part2) {
-            displayMessage("Parts must be unequal.", 'error');
+            displayMessage("The two parts must be of unequal size.", 'error');
             return;
         }
         if (part1 + part2 !== selectedHeap.value) {
-            displayMessage(`Must sum to ${selectedHeap.value}.`, 'error');
+            displayMessage(`The split must sum to the selected heap (${selectedHeap.value}).`, 'error');
             return;
         }
 
@@ -153,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 2200);
     }
 
-    // --- NEW: Helper to Show the Pop-up ---
+    // --- Helper to Show the Pop-up ---
     function showGameOver(winner) {
         gameOverModal.classList.remove('hidden');
         if (winner === 'human') {

@@ -46,6 +46,21 @@ body {
     flex-direction: column;
 }
 
+.game-header {
+    position: relative;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.header-text {
+    flex: 1;
+}
+
 .game-header h1 {
     font-size: 2.8em;
     font-weight: 700;
@@ -56,6 +71,52 @@ body {
     font-size: 1.1em;
     color: var(--secondary-text);
     margin-bottom: 30px;
+}
+
+/* Music Toggle Button */
+.music-toggle-btn {
+    background: var(--primary-blue);
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+    flex-shrink: 0;
+    padding: 0;
+}
+
+.music-toggle-btn:hover {
+    background: var(--primary-blue-hover);
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.3);
+}
+
+.music-toggle-btn:active {
+    transform: scale(0.95);
+}
+
+.music-toggle-btn.muted {
+    background: var(--secondary-text);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.music-toggle-btn.muted:hover {
+    background: var(--primary-text);
+}
+
+.music-icon {
+    font-size: 1.8em;
+    line-height: 1;
+    transition: transform 0.3s ease;
+}
+
+.music-toggle-btn:hover .music-icon {
+    transform: scale(1.2);
 }
 
 /* --- Input Groups & Buttons --- */
@@ -219,6 +280,21 @@ button:active {
     .game-header h1 {
         font-size: 2.2em;
     }
+    .header-content {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+    .header-text {
+        text-align: center;
+    }
+    .music-toggle-btn {
+        width: 45px;
+        height: 45px;
+    }
+    .music-icon {
+        font-size: 1.5em;
+    }
     .input-group {
         flex-direction: column;
     }
@@ -264,5 +340,317 @@ button:active {
     to {
         transform: scale(1);
         opacity: 1;
+    }
+}
+
+/* --- Rules Section Styles --- */
+.rules-container {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: var(--border-radius);
+    padding: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.rules-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.rules-header h2 {
+    font-size: 1.8em;
+    font-weight: 700;
+    color: var(--primary-text);
+    margin: 0;
+}
+
+.rules-toggle {
+    background: var(--primary-blue);
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+    font-size: 1.2em;
+    padding: 0;
+}
+
+.rules-toggle:hover {
+    transform: scale(1.1);
+}
+
+.rules-toggle.collapsed .toggle-icon {
+    transform: rotate(-90deg);
+}
+
+.rules-content {
+    overflow: hidden;
+    transition: max-height 0.5s ease, opacity 0.3s ease;
+    max-height: 2000px;
+    opacity: 1;
+}
+
+.rules-content.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin: 0;
+    padding: 0;
+}
+
+/* --- Animation Container --- */
+.rules-animation {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px;
+    margin-bottom: 25px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 12px;
+}
+
+.animation-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.step-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.step-title {
+    font-size: 0.9em;
+    font-weight: 600;
+    color: var(--primary-text);
+    margin: 0;
+    text-align: center;
+}
+
+/* --- Animated Heap Styles --- */
+.animated-heap {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5em;
+    font-weight: 700;
+    border-radius: 50%;
+    background: var(--heap-bg);
+    color: var(--primary-text);
+    transition: all 0.5s ease;
+    position: relative;
+}
+
+.start-heap {
+    animation: bounce 2s ease-in-out infinite;
+    background: linear-gradient(145deg, #007bff, #0056b3);
+    color: white;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.splitting-heap {
+    animation: split-pulse 2s ease-in-out infinite;
+    background: linear-gradient(145deg, #28a745, #1e7e34);
+    color: white;
+}
+
+@keyframes split-pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+}
+
+.split-animation {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.split-arrow {
+    font-size: 1.5em;
+    color: var(--primary-blue);
+    animation: arrow-bounce 1.5s ease-in-out infinite;
+}
+
+@keyframes arrow-bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(5px);
+    }
+}
+
+.split-result {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.result-heap {
+    animation: slide-in 2s ease-in-out infinite;
+    background: linear-gradient(145deg, #ffc107, #ff9800);
+    color: white;
+}
+
+.result-heap:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+@keyframes slide-in {
+    0% {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    50%, 100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.ai-move-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.ai-heap {
+    animation: ai-glow 2s ease-in-out infinite;
+    background: linear-gradient(145deg, #6f42c1, #4a2b85);
+    color: white;
+}
+
+@keyframes ai-glow {
+    0%, 100% {
+        box-shadow: 0 0 10px rgba(111, 66, 193, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(111, 66, 193, 0.8);
+    }
+}
+
+.ai-icon {
+    font-size: 1.5em;
+    animation: rotate 3s linear infinite;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.final-state {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.final-heap {
+    background: var(--heap-disabled-bg);
+    color: var(--secondary-text);
+    animation: fade-in 1s ease-in;
+}
+
+.final-heap.disabled::after {
+    content: '✗';
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    font-size: 0.6em;
+    color: var(--error-color);
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+
+/* --- Rules Text --- */
+.rules-text {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.rule-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    transition: transform 0.2s ease;
+}
+
+.rule-item:hover {
+    transform: translateX(5px);
+}
+
+.rule-icon {
+    font-size: 1.3em;
+    flex-shrink: 0;
+}
+
+.rule-item p {
+    margin: 0;
+    font-size: 0.95em;
+    color: var(--primary-text);
+    line-height: 1.5;
+}
+
+.rule-item strong {
+    color: var(--primary-blue);
+}
+
+/* --- Responsive Design for Rules --- */
+@media (max-width: 600px) {
+    .rules-text {
+        grid-template-columns: 1fr;
+    }
+    
+    .animated-heap {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2em;
     }
 }
