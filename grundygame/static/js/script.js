@@ -16,11 +16,49 @@ document.addEventListener('DOMContentLoaded', () => {
     const rulesToggle = document.getElementById('rules-toggle');
     const rulesContent = document.getElementById('rules-content');
     const musicToggleBtn = document.getElementById('music-toggle-btn');
-
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    const currentTheme = localStorage.getItem('theme');
+    const modal = document.getElementById('end-game-modal');
+const modalTitle = document.getElementById('modal-title');
+const modalMessage = document.getElementById('modal-message');
+const modalPlayAgainBtn = document.getElementById('modal-play-again-btn');
+const gameBoard = document.getElementById('game-board'); // Make sure you have this
+    // Apply the saved theme on page load
+    // Function to apply the theme
+    const applyTheme = (theme) => {
+        if (theme === 'dark') {
+            document.body.classList.add('dark-mode');
+        } else {
+            document.body.classList.remove('dark-mode');
+        }
+    };
     let heaps = [];
     let selectedHeap = null;
     let isAnimating = false;
 
+    // Check for a saved theme in local storage or user's system preference
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    if (savedTheme) {
+        applyTheme(savedTheme);
+    } else if (prefersDark) {
+        applyTheme('dark');
+    } else {
+        applyTheme('light');
+    }
+
+    // Event listener for the theme toggle button
+    themeToggleBtn.addEventListener('click', () => {
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        if (isDarkMode) {
+            applyTheme('light');
+            localStorage.setItem('theme', 'light');
+        } else {
+            applyTheme('dark');
+            localStorage.setItem('theme', 'dark');
+        }
+    });
     // --- Sound Manager Integration ---
     // Initialize background music when page loads
     // Note: Modern browsers may require user interaction before playing audio
@@ -45,7 +83,47 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('click', startMusicOnInteraction, { once: true });
         document.addEventListener('keydown', startMusicOnInteraction, { once: true });
     }
+    function showEndGameModal(isPlayerWinner) {
+    // Clear any old confetti
+    document.querySelector('.confetti-container').innerHTML = '';
 
+    if (isPlayerWinner) {
+        modal.classList.add('win');
+        modal.classList.remove('lose');
+        modalTitle.textContent = 'You Win!';
+        modalMessage.textContent = 'Congratulations! You outsmarted the AI.';
+        // Trigger confetti
+        createConfetti();
+    } else {
+        modal.classList.add('lose');
+        modal.classList.remove('win');
+        modalTitle.textContent = 'AI Wins!';
+        modalMessage.textContent = 'The AI was one step ahead. Better luck next time!';
+    }
+    modal.classList.remove('hidden');
+}
+    function createConfetti() {
+    const confettiContainer = document.querySelector('.confetti-container');
+    const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800'];
+    
+    for (let i = 0; i < 100; i++) {
+        const confettiPiece = document.createElement('div');
+        confettiPiece.classList.add('confetti');
+        confettiPiece.style.left = `${Math.random() * 100}vw`;
+        confettiPiece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confettiPiece.style.animationDelay = `${Math.random() * 5}s`;
+        // Vary size for a more realistic effect
+        const size = Math.random() * 10 + 5;
+        confettiPiece.style.width = `${size}px`;
+        confettiPiece.style.height = `${size}px`;
+
+        confettiContainer.appendChild(confettiPiece);
+    }
+}
+    modalPlayAgainBtn.addEventListener('click', () => {
+    modal.classList.add('hidden');
+    startGame(); // Assuming your restart function is named this
+});
     // --- Music Toggle Functionality ---
     function updateMusicToggleIcon() {
         if (musicToggleBtn && typeof soundManager !== 'undefined') {
@@ -87,27 +165,55 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Game Logic Functions ---
     function startGame() {
-        const number = parseInt(initialNumberInput.value);
-        if (isNaN(number) || number <= 2) {
-            displayMessage("Please enter a number greater than 2.", 'error');
-            return;
-        }
-        
-        fetch('/start', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ number: number }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            heaps = data.heaps;
-            updateGameBoard();
-            gameSetupDiv.classList.add('hidden');
-            gameBoardContainer.classList.remove('hidden');
-            restartGameBtn.classList.remove('hidden');
-            updateTurnIndicator(true);
-        });
+    const number = parseInt(initialNumberInput.value);
+    if (isNaN(number) || number <= 2) {
+        displayMessage("Please enter a number greater than 2.", 'error');
+        return;
     }
+    
+    fetch('/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ number: number }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        heaps = data.heaps;
+        updateGameBoard();
+        gameSetupDiv.classList.add('hidden');
+        gameBoardContainer.classList.remove('hidden');
+        restartGameBtn.classList.remove('hidden');
+
+        // --- NEW: Randomize Starting Turn ---
+        const isPlayerTurnFirst = Math.random() < 0.5;
+
+        if (isPlayerTurnFirst) {
+            // Player's turn to start
+            updateTurnIndicator(true);
+            displayMessage("The coin toss decided: You start first!", 'info');
+        } else {
+            // AI's turn to start
+            updateTurnIndicator(false);
+            displayMessage("The coin toss decided: The AI starts first!", 'info');
+            playerControlsDiv.classList.add('hidden'); // Hide controls
+            gameBoard.classList.add('ai-thinking');   // Start thinking animation
+
+            // Give the player a moment to see the AI is starting
+            setTimeout(() => {
+                // The AI makes the very first move
+                fetch('/move', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ heaps: heaps }),
+                })
+                .then(response => response.json())
+                .then(aiMoveData => {
+                    animateAIMove(aiMoveData);
+                });
+            }, 1500); // 1.5-second delay for better UX
+        }
+    });
+}
 
     function makePlayerMove() {
         if (isAnimating) return;
@@ -154,6 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // NOW, ask the AI for its move
             updateTurnIndicator(false);
+            gameBoard.classList.add('ai-thinking'); // NEW: Start the "AI thinking" animation
             fetch('/move', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -170,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.winner === 'human') {
             heaps = data.heaps;
             updateGameBoard();
-            displayMessage("Congratulations! You made the final move. You Win!", 'win');
+            showEndGameModal(true); // MODIFIED: Show the "You Win!" modal
             endGame();
             isAnimating = false;
             return;
@@ -191,11 +298,12 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             isAnimating = false;
             heaps = data.heaps;
+            gameBoard.classList.remove('ai-thinking'); // NEW: Stop the "AI thinking" animation
             updateGameBoard();
 
             if (data.winner === 'ai') {
                 // Use the new, more descriptive losing message
-                displayMessage("No more moves are possible for you. The AI wins!", 'lose');
+                showEndGameModal(false); // MODIFIED: Show the "AI Wins!" modal
                 endGame();
             } else {
                 updateTurnIndicator(true);
@@ -241,11 +349,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function displayMessage(message, type = '') {
-        gameMessageDiv.textContent = message;
-        gameMessageDiv.className = 'game-message';
-        if (type === 'win') gameMessageDiv.classList.add('message-win');
-        else if (type === 'lose' || type === 'error') gameMessageDiv.classList.add('message-lose');
+    gameMessageDiv.textContent = message;
+    gameMessageDiv.className = 'game-message'; // Reset classes first
+    if (type === 'win') {
+        gameMessageDiv.classList.add('message-win');
+    } else if (type === 'lose' || type === 'error') {
+        gameMessageDiv.classList.add('message-lose');
+    } else if (type === 'info') { // ADDED THIS CONDITION
+        gameMessageDiv.classList.add('message-info');
     }
+}
     
     function updateTurnIndicator(isPlayerTurn) {
         if (isPlayerTurn) {
